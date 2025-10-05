@@ -1,0 +1,1 @@
+web: cd app && gunicorn config.wsgi --log-file -

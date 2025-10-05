@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - AI News Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- Profile Card -->
+            <div class="card text-center">
+                <div class="card-body">
+                    {% if user.profile.image %}
+                    <img src="{{ user.profile.image.url }}" class="rounded-circle mb-3" width="150" height="150" alt="{{ user.username }}" style="object-fit: cover;">
+                    {% else %}
+                    <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+                        <i class="fas fa-user text-white fa-4x"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <h4 class="fw-bold">{{ user.first_name }} {{ user.last_name|default:user.username }}</h4>
+                    <p class="text-muted">@{{ user.username }}</p>
+                    
+                    <div class="row text-center mt-4">
+                        <div class="col-4">
+                            <h5 class="mb-0">{{ user.comment_set.count }}</h5>
+                            <small class="text-muted">Comments</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="mb-0">{{ user.date_joined|timesince }}</h5>
+                            <small class="text-muted">Member Since</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="mb-0">{{ user.comment_set.count|default:0 }}</h5>
+                            <small class="text-muted">Articles Read</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Profile Update Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Update Profile
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ u_form.username.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Username
+                                </label>
+                                {{ u_form.username }}
+                                {% if u_form.username.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ u_form.username.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ u_form.email.id_for_label }}" class="form-label">
+                                    <i class="fas fa-envelope me-2"></i>Email
+                                </label>
+                                {{ u_form.email }}
+                                {% if u_form.email.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ u_form.email.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ u_form.first_name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user me-2"></i>First Name
+                                </label>
+                                {{ u_form.first_name }}
+                                {% if u_form.first_name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ u_form.first_name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ u_form.last_name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user me-2"></i>Last Name
+                                </label>
+                                {{ u_form.last_name }}
+                                {% if u_form.last_name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ u_form.last_name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ p_form.image.id_for_label }}" class="form-label">
+                                <i class="fas fa-camera me-2"></i>Profile Picture
+                            </label>
+                            {{ p_form.image }}
+                            {% if p_form.image.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ p_form.image.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Choose a new profile picture (optional)</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update Profile
+                            </button>
+                            <a href="{% url 'news:dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user.comment_set.all %}
+                        {% for comment in user.comment_set.all|slice:":5" %}
+                        <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+                            <i class="fas fa-comment text-primary me-3 mt-1"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">
+                                    <a href="{% url 'news:article_detail' comment.article.pk %}" class="text-decoration-none">
+                                        {{ comment.article.title|truncatechars:60 }}
+                                    </a>
+                                </h6>
+                                <p class="mb-1 text-muted">{{ comment.content|truncatechars:100 }}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-star text-warning"></i> {{ comment.rating }}/5 • 
+                                    {{ comment.created_at|timesince }} ago
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if user.comment_set.count > 5 %}
+                        <div class="text-center">
+                            <small class="text-muted">And {{ user.comment_set.count|add:"-5" }} more comments...</small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-comments text-muted fa-3x mb-3"></i>
+                        <p class="text-muted">No activity yet. Start reading and commenting on articles!</p>
+                        <a href="{% url 'news:dashboard' %}" class="btn btn-primary">
+                            <i class="fas fa-newspaper me-2"></i>Browse News
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

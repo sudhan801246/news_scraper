@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+
+{% block title %}AI News Hub - Your Intelligent News Source{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Stay Informed with <span class="text-warning">AI-Powered</span> News
+                </h1>
+                <p class="lead mb-4">
+                    Get personalized news insights, trending topics analysis, and curated articles from trusted sources worldwide.
+                </p>
+                {% if not user.is_authenticated %}
+                    <div class="d-grid gap-2 d-md-flex">
+                        <a href="{% url 'news:register' %}" class="btn btn-warning btn-lg me-md-2">
+                            <i class="fas fa-rocket me-2"></i>Get Started Free
+                        </a>
+                        <a href="{% url 'news:login' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="d-grid gap-2 d-md-flex">
+                        <a href="{% url 'news:dashboard' %}" class="btn btn-warning btn-lg me-md-2">
+                            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                        </a>
+                        <a href="{% url 'news:personalized' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-brain me-2"></i>AI Recommendations
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 text-center">
+                <i class="fas fa-newspaper" style="font-size: 8rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5 bg-white">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body">
+                        <i class="fas fa-newspaper text-primary mb-3" style="font-size: 2.5rem;"></i>
+                        <h3 class="fw-bold">{{ total_articles|default:0 }}</h3>
+                        <p class="text-muted">Articles Available</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body">
+                        <i class="fas fa-globe text-primary mb-3" style="font-size: 2.5rem;"></i>
+                        <h3 class="fw-bold">12</h3>
+                        <p class="text-muted">News Sources</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body">
+                        <i class="fas fa-tags text-primary mb-3" style="font-size: 2.5rem;"></i>
+                        <h3 class="fw-bold">6</h3>
+                        <p class="text-muted">Categories</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 border-0">
+                    <div class="card-body">
+                        <i class="fas fa-brain text-primary mb-3" style="font-size: 2.5rem;"></i>
+                        <h3 class="fw-bold">AI</h3>
+                        <p class="text-muted">Powered Insights</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Articles -->
+{% if featured_articles %}
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="fw-bold mb-3">Latest News</h2>
+                <p class="lead text-muted">Stay updated with the most recent stories from around the world</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for article in featured_articles %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100">
+                    {% if article.image %}
+                    <img src="{{ article.image }}" class="card-img-top article-image" alt="{{ article.title }}" loading="lazy">
+                    {% else %}
+                    <div class="card-img-top article-image bg-light d-flex align-items-center justify-content-center">
+                        <i class="fas fa-newspaper text-muted" style="font-size: 3rem;"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="card-body d-flex flex-column">
+                        <div class="mb-2">
+                            <span class="category-badge bg-primary text-white">
+                                {{ article.get_category_display }}
+                            </span>
+                            {% if article.source %}
+                            <small class="text-muted ms-2">
+                                <i class="fas fa-building me-1"></i>{{ article.source }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        
+                        <h5 class="card-title">{{ article.title|truncatechars:80 }}</h5>
+                        
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if user.is_authenticated %}
+                                    <a href="{% url 'news:article_detail' article.pk %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>Read More
+                                    </a>
+                                {% else %}
+                                    <a href="{{ article.url }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-external-link-alt me-1"></i>Read Original
+                                    </a>
+                                {% endif %}
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>{{ article.created_at|timesince }} ago
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if user.is_authenticated %}
+        <div class="text-center mt-4">
+            <a href="{% url 'news:dashboard' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-arrow-right me-2"></i>View All Articles
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Categories Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="fw-bold mb-3">Explore Categories</h2>
+                <p class="lead text-muted">Discover news from different categories that interest you</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-microchip text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="card-title">Technology</h5>
+                        <p class="card-text">Latest tech news, innovations, and digital trends</p>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'news:category_news' 'technology' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-right me-1"></i>Explore
+                            </a>
+                        {% else %}
+                            <a href="{% url 'news:login' %}" class="btn btn-outline-primary">Login to Explore</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-chart-line text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="card-title">Economy</h5>
+                        <p class="card-text">Business news, market updates, and financial insights</p>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'news:category_news' 'economy' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-right me-1"></i>Explore
+                            </a>
+                        {% else %}
+                            <a href="{% url 'news:login' %}" class="btn btn-outline-primary">Login to Explore</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-futbol text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="card-title">Sports</h5>
+                        <p class="card-text">Sports news, match updates, and athlete stories</p>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'news:category_news' 'sports' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-right me-1"></i>Explore
+                            </a>
+                        {% else %}
+                            <a href="{% url 'news:login' %}" class="btn btn-outline-primary">Login to Explore</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-landmark text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="card-title">Politics</h5>
+                        <p class="card-text">Political developments and government news</p>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'news:category_news' 'politics' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-right me-1"></i>Explore
+                            </a>
+                        {% else %}
+                            <a href="{% url 'news:login' %}" class="btn btn-outline-primary">Login to Explore</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-heart text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="card-title">Lifestyle</h5>
+                        <p class="card-text">Health, wellness, and lifestyle content</p>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'news:category_news' 'lifestyle' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-right me-1"></i>Explore
+                            </a>
+                        {% else %}
+                            <a href="{% url 'news:login' %}" class="btn btn-outline-primary">Login to Explore</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <i class="fas fa-film text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="card-title">Entertainment</h5>
+                        <p class="card-text">Movies, celebrities, and entertainment news</p>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'news:category_news' 'entertainment' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-right me-1"></i>Explore
+                            </a>
+                        {% else %}
+                            <a href="{% url 'news:login' %}" class="btn btn-outline-primary">Login to Explore</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AI Features Section -->
+{% if user.is_authenticated %}
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="fw-bold mb-3">AI-Powered Features</h2>
+                <p class="lead text-muted">Experience intelligent news consumption with our AI features</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="card-body text-center p-5">
+                        <i class="fas fa-lightbulb mb-4" style="font-size: 4rem;"></i>
+                        <h4 class="card-title">News Insights</h4>
+                        <p class="card-text">Get AI-generated insights about trending topics and news patterns</p>
+                        <a href="{% url 'news:insights' %}" class="btn btn-warning btn-lg mt-3">
+                            <i class="fas fa-brain me-2"></i>View Insights
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 bg-gradient" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                    <div class="card-body text-center p-5">
+                        <i class="fas fa-user-check mb-4" style="font-size: 4rem;"></i>
+                        <h4 class="card-title">Personalized News</h4>
+                        <p class="card-text">Receive news recommendations tailored to your interests and reading history</p>
+                        <a href="{% url 'news:personalized' %}" class="btn btn-warning btn-lg mt-3">
+                            <i class="fas fa-magic me-2"></i>Get Recommendations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Call to Action -->
+{% if not user.is_authenticated %}
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-3">Ready to Get Started?</h2>
+        <p class="lead mb-4">Join thousands of users who trust AI News Hub for their daily news consumption</p>
+        <div class="d-grid gap-2 d-md-flex justify-content-center">
+            <a href="{% url 'news:register' %}" class="btn btn-warning btn-lg me-md-2">
+                <i class="fas fa-user-plus me-2"></i>Create Free Account
+            </a>
+            <a href="{% url 'news:login' %}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
