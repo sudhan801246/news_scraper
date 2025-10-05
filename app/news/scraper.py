@@ -1,16 +1,87 @@
 import pandas as pd
-import curl_cffi
+from curl_cffi import requests
 from lxml import etree
 import logging
+from tqdm import tqdm
+import time
+from datetime import datetime
 
+# Configure colorful logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s',
+    datefmt='%H:%M:%S'
+)
 logger = logging.getLogger(__name__)
+
+# Color codes for terminal output
+class Colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def print_banner():
+    """Print an attractive banner for the news scraper"""
+    print(f"\n{Colors.HEADER}{Colors.BOLD}")
+    print("╔══════════════════════════════════════════════════════════════╗")
+    print("║                    🤖 AI NEWS SCRAPER 🤖                    ║")
+    print("║              Intelligent News Aggregation System            ║")
+    print("╚══════════════════════════════════════════════════════════════╝")
+    print(f"{Colors.ENDC}")
+    print(f"{Colors.OKCYAN}🌐 Scraping from 12 premium news sources across 6 categories{Colors.ENDC}")
+    print(f"{Colors.OKGREEN}📊 Real-time progress tracking with beautiful visualizations{Colors.ENDC}")
+    print(f"{Colors.WARNING}⚡ Powered by AI and modern web scraping technology{Colors.ENDC}\n")
+
+def log_scraper_start(source_name, category, url):
+    """Log the start of scraping from a source"""
+    print(f"{Colors.OKBLUE}🔍 Scraping {Colors.BOLD}{source_name}{Colors.ENDC}{Colors.OKBLUE} | {category.title()} News{Colors.ENDC}")
+    logger.info(f"Starting scrape: {source_name} ({category})")
+
+def log_scraper_result(source_name, article_count, success=True):
+    """Log the result of scraping"""
+    if success and article_count > 0:
+        print(f"{Colors.OKGREEN}✅ {source_name}: {article_count} articles found{Colors.ENDC}")
+        logger.info(f"Success: {source_name} - {article_count} articles")
+    elif success and article_count == 0:
+        print(f"{Colors.WARNING}⚠️  {source_name}: No articles found{Colors.ENDC}")
+        logger.warning(f"No articles: {source_name}")
+    else:
+        print(f"{Colors.FAIL}❌ {source_name}: Scraping failed{Colors.ENDC}")
+        logger.error(f"Failed: {source_name}")
+
+def log_final_summary(total_articles, categories_stats, sources_stats):
+    """Log the final scraping summary"""
+    print(f"\n{Colors.HEADER}{Colors.BOLD}")
+    print("╔══════════════════════════════════════════════════════════════╗")
+    print("║                    📊 SCRAPING SUMMARY 📊                   ║")
+    print("╚══════════════════════════════════════════════════════════════╝")
+    print(f"{Colors.ENDC}")
+    
+    print(f"{Colors.OKGREEN}{Colors.BOLD}🎉 Total Articles Scraped: {total_articles}{Colors.ENDC}\n")
+    
+    print(f"{Colors.OKCYAN}{Colors.BOLD}📂 By Category:{Colors.ENDC}")
+    for category, count in categories_stats.items():
+        print(f"   📰 {category.title()}: {Colors.OKGREEN}{count}{Colors.ENDC} articles")
+    
+    print(f"\n{Colors.OKCYAN}{Colors.BOLD}🌐 By Source:{Colors.ENDC}")
+    for source, count in sources_stats.items():
+        print(f"   🏢 {source}: {Colors.OKGREEN}{count}{Colors.ENDC} articles")
+    
+    print(f"\n{Colors.WARNING}💾 Data saved to CSV file for analysis{Colors.ENDC}")
+    print(f"{Colors.OKBLUE}🌟 Articles ready for AI processing and insights{Colors.ENDC}\n")
 
 
 def get_dom(arg_link):
     """Get DOM from URL with retry logic"""
     for attempt in range(5):
         try:
-            response = curl_cffi.get(
+            response = requests.get(
                 arg_link, 
                 timeout=60, 
                 impersonate='chrome',
@@ -48,8 +119,15 @@ def get_all_results(arg_dom, arg_xpath):
 # Technology News Scrapers
 def scrape_tech_techcrunch():
     """Scrape technology news from TechCrunch"""
-    dom = get_dom("https://techcrunch.com/latest/?offset=30")
+    source_name = "TechCrunch"
+    category = "technology"
+    url = "https://techcrunch.com/latest/?offset=30"
+    
+    log_scraper_start(source_name, category, url)
+    
+    dom = get_dom(url)
     if not dom:
+        log_scraper_result(source_name, 0, False)
         return []
     
     data = []
@@ -58,11 +136,13 @@ def scrape_tech_techcrunch():
             "title": get_from_xpath(each_res, ".//h3/a//text()"),
             "link": get_from_xpath(each_res, ".//h3/a/@href"),
             "image": get_from_xpath(each_res, ".//figure/img/@src"),
-            "source": "TechCrunch",
-            "category": "technology"
+            "source": source_name,
+            "category": category
         }
         if row_data["title"]:
             data.append(row_data)
+    
+    log_scraper_result(source_name, len(data), True)
     return data
 
 
@@ -342,47 +422,118 @@ def scrape_entertainment_variety():
 
 
 def scrape_all_news():
-    """Main function to scrape all news from all sources"""
+    """Main function to scrape all news from all sources with progress tracking"""
+    print_banner()
+    
     scraped_data = []
     
     scrapers = [
-        scrape_tech_techcrunch,
-        scrape_tech_theverge,
-        scrape_economy_indianexpress,
-        scrape_economy_economictimes,
-        scrape_sports_indianexpress,
-        scrape_sports_hindustantimes,
-        scrape_politics_economictimes,
-        scrape_politics_nytimes,
-        scrape_lifestyle_indianexpress,
-        scrape_lifestyle_foxnews,
-        scrape_entertainment_indianexpress,
-        scrape_entertainment_variety,
+        ("TechCrunch", "Technology", scrape_tech_techcrunch),
+        ("The Verge", "Technology", scrape_tech_theverge),
+        ("Indian Express", "Economy", scrape_economy_indianexpress),
+        ("Economic Times", "Economy", scrape_economy_economictimes),
+        ("Indian Express", "Sports", scrape_sports_indianexpress),
+        ("Hindustan Times", "Sports", scrape_sports_hindustantimes),
+        ("Economic Times", "Politics", scrape_politics_economictimes),
+        ("NY Times", "Politics", scrape_politics_nytimes),
+        ("Indian Express", "Lifestyle", scrape_lifestyle_indianexpress),
+        ("Fox News", "Lifestyle", scrape_lifestyle_foxnews),
+        ("Indian Express", "Entertainment", scrape_entertainment_indianexpress),
+        ("Variety", "Entertainment", scrape_entertainment_variety),
     ]
     
-    for scraper in scrapers:
-        try:
-            data = scraper()
-            scraped_data.extend(data)
-            logger.info(f"Successfully scraped {len(data)} articles from {scraper.__name__}")
-        except Exception as e:
-            logger.error(f"Error in {scraper.__name__}: {e}")
+    print(f"{Colors.HEADER}🚀 Starting news aggregation from {len(scrapers)} sources...{Colors.ENDC}\n")
+    
+    # Progress bar for overall scraping
+    with tqdm(total=len(scrapers), desc="📰 Scraping Progress", 
+              bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} sources [{elapsed}<{remaining}]",
+              colour="green") as pbar:
+        
+        for source_name, category, scraper_func in scrapers:
+            try:
+                # Update progress bar description
+                pbar.set_description(f"🔍 Scraping {source_name}")
+                
+                # Add small delay for visual effect
+                time.sleep(0.5)
+                
+                # Run the scraper
+                data = scraper_func()
+                scraped_data.extend(data)
+                
+                # Update progress bar
+                pbar.update(1)
+                
+            except Exception as e:
+                log_scraper_result(source_name, 0, False)
+                logger.error(f"Error in {scraper_func.__name__}: {e}")
+                pbar.update(1)
+    
+    # Calculate statistics
+    categories_stats = {}
+    sources_stats = {}
+    
+    for article in scraped_data:
+        # Category stats
+        cat = article['category']
+        categories_stats[cat] = categories_stats.get(cat, 0) + 1
+        
+        # Source stats
+        src = article['source']
+        sources_stats[src] = sources_stats.get(src, 0) + 1
+    
+    # Display final summary
+    log_final_summary(len(scraped_data), categories_stats, sources_stats)
     
     return scraped_data
 
 
 def save_to_csv(data, filename="scraped_data.csv"):
-    """Save scraped data to CSV file"""
+    """Save scraped data to CSV file with enhanced logging"""
     if data:
-        df = pd.DataFrame(data)
-        df.to_csv(filename, index=False)
-        logger.info(f"Saved {len(data)} articles to {filename}")
-        return True
-    return False
+        print(f"\n{Colors.WARNING}💾 Saving {len(data)} articles to CSV file...{Colors.ENDC}")
+        
+        # Add timestamp to filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename_with_time = f"{timestamp}_{filename}"
+        
+        with tqdm(total=1, desc="📁 Writing CSV", colour="blue") as pbar:
+            df = pd.DataFrame(data)
+            df.to_csv(filename_with_time, index=False)
+            pbar.update(1)
+        
+        print(f"{Colors.OKGREEN}✅ Successfully saved to: {filename_with_time}{Colors.ENDC}")
+        logger.info(f"Saved {len(data)} articles to {filename_with_time}")
+        return filename_with_time
+    else:
+        print(f"{Colors.FAIL}❌ No data to save{Colors.ENDC}")
+        return False
 
 
 if __name__ == "__main__":
-    # For standalone testing
-    logging.basicConfig(level=logging.INFO)
+    """Main execution block for running the scraper standalone"""
+    print(f"{Colors.BOLD}{Colors.HEADER}")
+    print("🚀 AI News Scraper - Standalone Mode")
+    print("=" * 50)
+    print(f"{Colors.ENDC}")
+    
+    start_time = datetime.now()
+    print(f"{Colors.OKCYAN}📅 Started at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}{Colors.ENDC}\n")
+    
+    # Run the complete scraper
     scraped_data = scrape_all_news()
-    save_to_csv(scraped_data)
+    
+    # Save to CSV
+    if scraped_data:
+        csv_file = save_to_csv(scraped_data)
+        
+        # Calculate execution time
+        end_time = datetime.now()
+        duration = end_time - start_time
+        
+        print(f"\n{Colors.OKGREEN}{Colors.BOLD}🎉 SCRAPING COMPLETED SUCCESSFULLY! 🎉{Colors.ENDC}")
+        print(f"{Colors.OKCYAN}⏱️  Total execution time: {duration.total_seconds():.1f} seconds{Colors.ENDC}")
+        print(f"{Colors.WARNING}📂 Data saved as: {csv_file}{Colors.ENDC}")
+        print(f"{Colors.OKBLUE}🌟 Ready for AI processing and website integration!{Colors.ENDC}\n")
+    else:
+        print(f"{Colors.FAIL}❌ No articles were scraped. Please check your internet connection.{Colors.ENDC}")
