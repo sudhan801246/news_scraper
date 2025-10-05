@@ -165,7 +165,7 @@
                         <a href="{% url 'news:category_news' article.category %}" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-list me-2"></i>More {{ article.get_category_display }} News
                         </a>
-                        <a href="{% url 'news:insights' article.category %}" class="btn btn-outline-success btn-sm">
+                        <a href="{% url 'news:category_insights' article.category %}" class="btn btn-outline-success btn-sm">
                             <i class="fas fa-lightbulb me-2"></i>{{ article.get_category_display }} Insights
                         </a>
                         <a href="{% url 'news:dashboard' %}" class="btn btn-outline-secondary btn-sm">

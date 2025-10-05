@@ -489,22 +489,32 @@ def scrape_all_news():
 
 
 def save_to_csv(data, filename="scraped_data.csv"):
-    """Save scraped data to CSV file with enhanced logging"""
+    """Save scraped data to CSV file with enhanced logging in data folder"""
     if data:
         print(f"\n{Colors.WARNING}💾 Saving {len(data)} articles to CSV file...{Colors.ENDC}")
         
+        # Create data directory path
+        import os
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(script_dir))
+        data_dir = os.path.join(project_root, "data")
+        
+        # Ensure data directory exists
+        os.makedirs(data_dir, exist_ok=True)
+        
         # Add timestamp to filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename_with_time = f"{timestamp}_{filename}"
+        filename_with_time = f"news_scrape_{timestamp}.csv"
+        full_path = os.path.join(data_dir, filename_with_time)
         
         with tqdm(total=1, desc="📁 Writing CSV", colour="blue") as pbar:
             df = pd.DataFrame(data)
-            df.to_csv(filename_with_time, index=False)
+            df.to_csv(full_path, index=False)
             pbar.update(1)
         
-        print(f"{Colors.OKGREEN}✅ Successfully saved to: {filename_with_time}{Colors.ENDC}")
-        logger.info(f"Saved {len(data)} articles to {filename_with_time}")
-        return filename_with_time
+        print(f"{Colors.OKGREEN}✅ Successfully saved to: {full_path}{Colors.ENDC}")
+        logger.info(f"Saved {len(data)} articles to {full_path}")
+        return full_path
     else:
         print(f"{Colors.FAIL}❌ No data to save{Colors.ENDC}")
         return False
