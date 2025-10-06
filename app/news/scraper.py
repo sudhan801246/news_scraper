@@ -5,6 +5,8 @@ import logging
 from tqdm import tqdm
 import time
 from datetime import datetime
+import re
+from dateutil import parser
 
 # Configure colorful logging
 logging.basicConfig(
@@ -86,7 +88,7 @@ def get_dom(arg_link):
                 timeout=60, 
                 impersonate='chrome',
                 # Note: Remove proxy for production or use environment variable
-                # proxy="http://ocapgizs-US-rotate:araohu409l9t@p.webshare.io:80"
+                proxy="http://ocapgizs-US-rotate:araohu409l9t@p.webshare.io:80"
             )
             if response.status_code == 200:
                 dom = etree.fromstring(response.content, parser=etree.HTMLParser())
@@ -116,6 +118,21 @@ def get_all_results(arg_dom, arg_xpath):
         return []
 
 
+def format_datetime(datetime_str):
+    """Format datetime string to unified format: '6 Oct 2025, 16:42'"""
+    if not datetime_str or not datetime_str.strip():
+        return ""
+    
+    try:
+        # Parse the datetime string
+        dt = parser.parse(datetime_str, fuzzy = True)
+        # Format to desired format: "6 Oct 2025, 16:42"
+        return dt.strftime("%-d %b %Y, %H:%M")
+    except:
+        # If parsing fails, try to clean and return original
+        return datetime_str.strip()
+
+
 # Technology News Scrapers
 def scrape_tech_techcrunch():
     """Scrape technology news from TechCrunch"""
@@ -126,18 +143,22 @@ def scrape_tech_techcrunch():
     log_scraper_start(source_name, category, url)
     
     dom = get_dom(url)
-    if not dom:
+    if dom is None:
         log_scraper_result(source_name, 0, False)
         return []
     
     data = []
     for each_res in dom.xpath("//div[contains(@class,'loop-card--post-type-post')]"):
+        datetime_str = get_from_xpath(each_res, ".//time[@class='loop-card__meta-item loop-card__time wp-block-tc23-post-time-ago']/@datetime") or ""
+        datetime_str = format_datetime(datetime_str)
+        
         row_data = {
             "title": get_from_xpath(each_res, ".//h3/a//text()"),
             "link": get_from_xpath(each_res, ".//h3/a/@href"),
             "image": get_from_xpath(each_res, ".//figure/img/@src"),
             "source": source_name,
-            "category": category
+            "category": category,
+            "datetime": datetime_str
         }
         if row_data["title"]:
             data.append(row_data)
@@ -149,11 +170,14 @@ def scrape_tech_techcrunch():
 def scrape_tech_theverge():
     """Scrape technology news from The Verge"""
     dom = get_dom("https://www.theverge.com/tech")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//div[contains(@class,'hp1qhq3')]//div[contains(@class,'duet--content-cards--content-card _1u')]"):
+        datetime_str = get_from_xpath(each_res, ".//time/@datetime") or ""
+        datetime_str = format_datetime(datetime_str)
+        
         image_url = get_from_xpath(each_res, ".//img/@srcset")
         if image_url:
             image_url = image_url.split(',  https://platform.theverge.com')[-1].split('?')[0]
@@ -163,7 +187,8 @@ def scrape_tech_theverge():
             "link": "https://www.theverge.com" + get_from_xpath(each_res, ".//a[contains(@class,'_1lkmsmo0')]/@href"),
             "image": image_url,
             "source": "The Verge",
-            "category": "technology"
+            "category": "technology",
+            "datetime": datetime_str
         }
         if row_data["title"]:
             data.append(row_data)
@@ -174,11 +199,14 @@ def scrape_tech_theverge():
 def scrape_economy_indianexpress():
     """Scrape economy news from Indian Express"""
     dom = get_dom("https://indianexpress.com/section/business/economy/")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//div[contains(@class,'articles ')]"):
+        datetime_str = get_from_xpath(each_res, ".//div[@class='date']/text()") or ""
+        datetime_str = format_datetime(datetime_str)
+        
         image_url = get_from_xpath(each_res, ".//img/@data-src")
         if image_url:
             image_url = image_url.split('?')[0]
@@ -188,7 +216,8 @@ def scrape_economy_indianexpress():
             "link": get_from_xpath(each_res, ".//h2/a/@href"),
             "image": image_url,
             "source": "Indian Express",
-            "category": "economy"
+            "category": "economy",
+            "datetime": datetime_str
         }
         if row_data["title"]:
             data.append(row_data)
@@ -198,11 +227,14 @@ def scrape_economy_indianexpress():
 def scrape_economy_economictimes():
     """Scrape economy news from Economic Times"""
     dom = get_dom("https://economictimes.indiatimes.com/markets/stocks/news")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//div[contains(@class,'eachStory')]"):
+        datetime_str = get_from_xpath(each_res, ".//time[@class='date-format']/@data-time") or get_from_xpath(each_res, ".//time[@class='date-format']/text()") or ""
+        datetime_str = format_datetime(datetime_str)
+        
         image_url = get_from_xpath(each_res, ".//img/@src")
         if image_url:
             image_url = image_url.split('?')[0].replace(',width-160,height-120,', ',width-640,height-480,')
@@ -212,7 +244,8 @@ def scrape_economy_economictimes():
             "link": "https://economictimes.indiatimes.com" + get_from_xpath(each_res, ".//h3/a/@href"),
             "image": image_url,
             "source": "Economic Times",
-            "category": "economy"
+            "category": "economy",
+            "datetime": datetime_str
         }
         if row_data["title"]:
             data.append(row_data)
@@ -223,11 +256,14 @@ def scrape_economy_economictimes():
 def scrape_sports_indianexpress():
     """Scrape sports news from Indian Express"""
     dom = get_dom("https://indianexpress.com/article/sports/")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//div[contains(@class,'articles ')]"):
+        datetime_str = get_from_xpath(each_res, ".//div[@class='date']/text()") or ""
+        datetime_str = format_datetime(datetime_str)
+        
         image_url = get_from_xpath(each_res, ".//img/@src")
         if image_url:
             image_url = image_url.split('?')[0]
@@ -237,7 +273,8 @@ def scrape_sports_indianexpress():
             "link": get_from_xpath(each_res, ".//h2/a/@href"),
             "image": image_url,
             "source": "Indian Express",
-            "category": "sports"
+            "category": "sports",
+            "datetime": datetime_str
         }
         if row_data["title"]:
             data.append(row_data)
@@ -247,11 +284,14 @@ def scrape_sports_indianexpress():
 def scrape_sports_hindustantimes():
     """Scrape sports news from Hindustan Times"""
     dom = get_dom("https://www.hindustantimes.com/sports")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//div[contains(@data-vars-storytype,'story') and contains(@class,'listView')]"):
+        datetime_str = get_from_xpath(each_res, ".//div[@class='dateTime secTime ftldateTime']/text()") or get_from_xpath(each_res, "@data-vars-story-time") or ""
+        datetime_str = format_datetime(datetime_str)
+        
         image_url = get_from_xpath(each_res, ".//img/@data-src")
         if image_url:
             image_url = image_url.split('?')[0].replace('/148x111/', '/550x309/')
@@ -261,7 +301,8 @@ def scrape_sports_hindustantimes():
             "link": get_from_xpath(each_res, ".//h2/a/@href"),
             "image": image_url,
             "source": "Hindustan Times",
-            "category": "sports"
+            "category": "sports",
+            "datetime": datetime_str
         }
         if row_data["title"]:
             data.append(row_data)
@@ -272,11 +313,14 @@ def scrape_sports_hindustantimes():
 def scrape_politics_economictimes():
     """Scrape politics news from Economic Times"""
     dom = get_dom("https://economictimes.indiatimes.com/news/politics")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//div[contains(@class,'botplData flt')]"):
+        datetime_str = get_from_xpath(each_res, ".//time[@class='date-format']/@data-time") or get_from_xpath(each_res, ".//time[@class='date-format']/text()") or ""
+        datetime_str = format_datetime(datetime_str)
+        
         image_url = get_from_xpath(each_res, ".//img/@data-original")
         if image_url:
             image_url = image_url.split('?')[0].replace(',width-160,height-120', ',width-640,height-480')
@@ -286,7 +330,8 @@ def scrape_politics_economictimes():
             "link": "https://economictimes.indiatimes.com" + get_from_xpath(each_res, ".//h3/a/@href"),
             "image": image_url,
             "source": "Economic Times",
-            "category": "politics"
+            "category": "politics",
+            "datetime": datetime_str
         }
         if row_data["title"]:
             data.append(row_data)
@@ -296,21 +341,25 @@ def scrape_politics_economictimes():
 def scrape_politics_nytimes():
     """Scrape politics news from NY Times"""
     dom = get_dom("https://www.nytimes.com/section/politics")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//li[contains(@class,'css-18yolpw')]"):
+        
+        datetime_str = "-".join(get_from_xpath(each_res, ".//a[h3]/@href").replace("/interactive", "").split('/')[1:4]) or ""
+        datetime_str = format_datetime(datetime_str)
+        
         image_url = get_from_xpath(each_res, ".//img/@src")
         if image_url:
             image_url = image_url.split(', ')[-1].split('?')[0].replace('-square320', '-square640')
-        
         row_data = {
             "title": get_from_xpath(each_res, ".//a/h3/text()"),
             "link": "https://www.nytimes.com" + get_from_xpath(each_res, ".//a[h3]/@href"),
             "image": image_url,
             "source": "New York Times",
-            "category": "politics"
+            "category": "politics",
+            "datetime": datetime_str
         }
         if row_data["title"]:
             data.append(row_data)
@@ -321,11 +370,14 @@ def scrape_politics_nytimes():
 def scrape_lifestyle_indianexpress():
     """Scrape lifestyle news from Indian Express"""
     dom = get_dom("https://indianexpress.com/article/lifestyle/")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//div[contains(@class,'articles ')]"):
+        datetime_str = get_from_xpath(each_res, ".//div[@class='date']/text()") or ""
+        datetime_str = format_datetime(datetime_str)
+        
         image_url = get_from_xpath(each_res, ".//img/@data-src")
         if image_url:
             image_url = image_url.split('?')[0]
@@ -335,7 +387,8 @@ def scrape_lifestyle_indianexpress():
             "link": get_from_xpath(each_res, ".//h2/a/@href"),
             "image": image_url,
             "source": "Indian Express",
-            "category": "lifestyle"
+            "category": "lifestyle",
+            "datetime": datetime_str
         }
         if row_data["title"]:
             data.append(row_data)
@@ -345,11 +398,12 @@ def scrape_lifestyle_indianexpress():
 def scrape_lifestyle_foxnews():
     """Scrape lifestyle news from Fox News"""
     dom = get_dom("https://www.foxnews.com/health")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//article[contains(@class,'article')]"):
+        datetime_str = get_all_results(each_res, ".//span[contains(@class,'time')]//text()") or ""
         image_url = get_from_xpath(each_res, ".//img/@src")
         if image_url:
             image_url = image_url.split('?')[0].replace('/348/196/', '/720/405/')
@@ -361,23 +415,31 @@ def scrape_lifestyle_foxnews():
             "link": link,
             "image": image_url,
             "source": "Fox News",
-            "category": "lifestyle"
+            "category": "lifestyle",
+            "datetime": datetime_str
         }
         
         if row_data["title"] and "/health/" in link:
             data.append(row_data)
-    return data
+    df = pd.DataFrame(data)
+    df.drop_duplicates('link', ignore_index = True, inplace = True)
+    df = df[df["datetime"].apply(lambda x : len(x) != 0)]
+    df['datetime'] = df['datetime'].apply(lambda x : format_datetime(x[0]))
+    return df.to_dict('records')
 
 
 # Entertainment News Scrapers
 def scrape_entertainment_indianexpress():
     """Scrape entertainment news from Indian Express"""
     dom = get_dom("https://indianexpress.com/section/entertainment/")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//article[contains(@class,'myie-articles')]"):
+        datetime_str = get_from_xpath(each_res, ".//div[@class='my-time']/text()") or ""
+        datetime_str = format_datetime(datetime_str)
+        
         image_url = get_from_xpath(each_res, ".//img/@data-src")
         if image_url:
             image_url = image_url.split('?')[0]
@@ -387,7 +449,8 @@ def scrape_entertainment_indianexpress():
             "link": get_from_xpath(each_res, ".//h2/a/@href"),
             "image": image_url,
             "source": "Indian Express",
-            "category": "entertainment"
+            "category": "entertainment",
+            "datetime": datetime_str
         }
         if row_data["title"]:
             data.append(row_data)
@@ -397,11 +460,14 @@ def scrape_entertainment_indianexpress():
 def scrape_entertainment_variety():
     """Scrape entertainment news from Variety"""
     dom = get_dom("https://variety.com/v/film/")
-    if not dom:
+    if dom is None:
         return []
     
     data = []
     for each_res in dom.xpath("//li/article"):
+        datetime_str = get_from_xpath(each_res, ".//time[contains(@class,'c-timestamp')]/text()") or ""
+        datetime_str = format_datetime(datetime_str)
+        
         image_url = get_from_xpath(each_res, ".//img/@src")
         if image_url:
             image_url = image_url.split('?')[0]
@@ -413,10 +479,11 @@ def scrape_entertainment_variety():
             "link": link,
             "image": image_url,
             "source": "Variety",
-            "category": "entertainment"
+            "category": "entertainment",
+            "datetime": datetime_str
         }
         
-        if row_data["title"] and "variety.com" in link:
+        if row_data["title"] and "variety.com" in link and '/film/' in link and ", " in datetime_str:
             data.append(row_data)
     return data
 
@@ -499,10 +566,9 @@ def save_to_csv(data, filename="scraped_data.csv"):
             # Railway persistent volume
             data_dir = "/app/data"
         else:
-            # Local development
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(os.path.dirname(script_dir))
-            data_dir = os.path.join(project_root, "data")
+            # Local development - get current working directory and add data folder
+            current_dir = os.getcwd()
+            data_dir = os.path.join(current_dir, "data")
         
         # Ensure data directory exists
         os.makedirs(data_dir, exist_ok=True)
