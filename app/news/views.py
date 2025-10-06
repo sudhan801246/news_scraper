@@ -446,3 +446,89 @@ def api_sentiment_analysis(request):
             'success': False,
             'error': 'Unable to analyze sentiment at this time.'
         })
+
+
+def debug_database(request):
+    """Debug database connection and migration status"""
+    from django.http import HttpResponse
+    from django.db import connection
+    from django.conf import settings
+    import os
+    
+    debug_info = []
+    debug_info.append("🔍 DATABASE DEBUG INFORMATION")
+    debug_info.append("=" * 50)
+    
+    # Database settings
+    db_settings = settings.DATABASES['default']
+    debug_info.append(f"Engine: {db_settings['ENGINE']}")
+    debug_info.append(f"Name: {db_settings.get('NAME', 'Not set')}")
+    debug_info.append(f"Host: {db_settings.get('HOST', 'Not set')}")
+    debug_info.append(f"Port: {db_settings.get('PORT', 'Not set')}")
+    debug_info.append(f"User: {db_settings.get('USER', 'Not set')}")
+    
+    # Environment variables
+    debug_info.append("\n📋 ENVIRONMENT VARIABLES:")
+    debug_info.append(f"DATABASE_URL: {os.environ.get('DATABASE_URL', 'NOT SET')}")
+    debug_info.append(f"DEBUG: {os.environ.get('DEBUG', 'NOT SET')}")
+    
+    # Test database connection
+    debug_info.append("\n🔌 DATABASE CONNECTION TEST:")
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT version()")
+            version = cursor.fetchone()[0]
+            debug_info.append(f"✅ Connected to: {version}")
+            
+            # Check if auth_user table exists
+            cursor.execute("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'auth_user'
+            """)
+            auth_table = cursor.fetchone()
+            
+            if auth_table:
+                debug_info.append("✅ auth_user table EXISTS")
+                cursor.execute("SELECT COUNT(*) FROM auth_user")
+                user_count = cursor.fetchone()[0]
+                debug_info.append(f"👥 Users in database: {user_count}")
+            else:
+                debug_info.append("❌ auth_user table MISSING")
+            
+            # List all tables
+            cursor.execute("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public'
+                ORDER BY table_name
+            """)
+            tables = cursor.fetchall()
+            debug_info.append(f"\n📊 ALL TABLES ({len(tables)}):")
+            for table in tables:
+                debug_info.append(f"  - {table[0]}")
+                
+    except Exception as e:
+        debug_info.append(f"❌ Database connection failed: {e}")
+    
+    # Check migration status
+    debug_info.append("\n🗃️ MIGRATION STATUS:")
+    try:
+        from django.db.migrations.executor import MigrationExecutor
+        executor = MigrationExecutor(connection)
+        plan = executor.migration_plan(executor.loader.graph.leaf_nodes())
+        
+        if plan:
+            debug_info.append(f"⚠️ Pending migrations: {len(plan)}")
+            for migration, backwards in plan:
+                debug_info.append(f"  - {migration}")
+        else:
+            debug_info.append("✅ All migrations applied")
+            
+    except Exception as e:
+        debug_info.append(f"❌ Could not check migrations: {e}")
+    
+    debug_info.append("\n" + "=" * 50)
+    
+    return HttpResponse("<pre>" + "\n".join(debug_info) + "</pre>", content_type="text/html")

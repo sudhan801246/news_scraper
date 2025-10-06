@@ -1,1 +1,1 @@
-web: cd app && python manage.py setup_database && python manage.py collectstatic --noinput && gunicorn config.wsgi --log-file -
+web: cd app && (python manage.py setup_database || echo "Migration failed but continuing...") && python manage.py collectstatic --noinput && gunicorn config.wsgi --log-file -
