@@ -52,6 +52,7 @@ urlpatterns = [
     path('api/article/<int:pk>/summary/', views.api_article_summary, name='api_article_summary'),
     path('api/sentiment/', views.api_sentiment_analysis, name='api_sentiment'),
     
-    # Debug endpoint
+    # Debug endpoints
     path('debug-database/', views.debug_database, name='debug_database'),
+    path('force-migrate/', views.force_migrate_now, name='force_migrate'),
 ]

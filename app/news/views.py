@@ -532,3 +532,76 @@ def debug_database(request):
     debug_info.append("\n" + "=" * 50)
     
     return HttpResponse("<pre>" + "\n".join(debug_info) + "</pre>", content_type="text/html")
+
+
+def force_migrate_now(request):
+    """Force run migrations manually via web endpoint"""
+    from django.http import HttpResponse
+    from django.core.management import execute_from_command_line
+    from django.db import connection
+    import sys
+    from io import StringIO
+    
+    # Capture stdout
+    old_stdout = sys.stdout
+    sys.stdout = captured_output = StringIO()
+    
+    output = []
+    output.append("🚀 MANUAL MIGRATION TRIGGER")
+    output.append("=" * 50)
+    
+    try:
+        # Test database connection first
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT version()")
+            version = cursor.fetchone()[0]
+            output.append(f"✅ Database connected: {version}")
+        
+        # Run migrations with captured output
+        output.append("\n📊 Running migrations...")
+        execute_from_command_line(['manage.py', 'migrate', '--verbosity=2'])
+        
+        # Get captured output
+        migration_output = captured_output.getvalue()
+        output.append("Migration output:")
+        output.append(migration_output)
+        
+        # Check if auth_user table now exists
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'auth_user'
+            """)
+            if cursor.fetchone():
+                output.append("✅ SUCCESS: auth_user table created!")
+            else:
+                output.append("❌ FAILED: auth_user table still missing")
+        
+        # List current tables
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public'
+                ORDER BY table_name
+            """)
+            tables = cursor.fetchall()
+            output.append(f"\n📊 Tables after migration ({len(tables)}):")
+            for table in tables:
+                output.append(f"  - {table[0]}")
+                
+    except Exception as e:
+        output.append(f"❌ Migration failed: {e}")
+        import traceback
+        output.append("Traceback:")
+        output.append(traceback.format_exc())
+    
+    finally:
+        # Restore stdout
+        sys.stdout = old_stdout
+    
+    output.append("\n" + "=" * 50)
+    
+    return HttpResponse("<pre>" + "\n".join(output) + "</pre>", content_type="text/html")
