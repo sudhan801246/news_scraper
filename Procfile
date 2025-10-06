@@ -1,1 +1,1 @@
-web: cd app && python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi --log-file -
+web: cd app && python manage.py migrate --noinput --verbosity=2 && python manage.py collectstatic --noinput && gunicorn config.wsgi --log-file -
