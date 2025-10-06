@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}View Batch {{ batch_info.batch_id }} - AI News Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2><i class="fas fa-table me-2"></i>Batch {{ batch_info.batch_id }}</h2>
+                    <small class="text-muted">
+                        Created: {{ batch_info.created_time|date:"M d, Y H:i" }} • 
+                        {{ total_records }} articles • 
+                        {{ batch_info.file_size_mb }} MB
+                    </small>
+                </div>
+                <div>
+                    <a href="{% url 'news:admin_download_batch' batch_info.batch_id %}" 
+                       class="btn btn-success me-2">
+                        <i class="fas fa-download me-2"></i>Download CSV
+                    </a>
+                    <a href="{% url 'news:admin_list_batches' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Batches
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Data Table -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-newspaper me-2"></i>News Articles Data
+                    </h5>
+                    <span class="badge bg-info">
+                        Page {{ current_page }} of {{ total_pages }}
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    {% for column in columns %}
+                                    <th scope="col" style="min-width: 150px;">{{ column|title }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in data %}
+                                <tr>
+                                    {% for column in columns %}
+                                    <td>
+                                        {% if column == 'url' and row[column] %}
+                                            <a href="{{ row[column] }}" target="_blank" class="text-decoration-none">
+                                                {{ row[column]|truncatechars:50 }}
+                                                <i class="fas fa-external-link-alt ms-1"></i>
+                                            </a>
+                                        {% elif column == 'title' %}
+                                            <strong>{{ row[column]|truncatechars:80 }}</strong>
+                                        {% elif column == 'content' %}
+                                            <div style="max-width: 300px;">
+                                                {{ row[column]|truncatechars:100 }}
+                                            </div>
+                                        {% elif column == 'published_date' %}
+                                            {{ row[column]|date:"M d, Y H:i" }}
+                                        {% else %}
+                                            {{ row[column]|truncatechars:60 }}
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="{{ columns|length }}" class="text-center py-4">
+                                        <i class="fas fa-exclamation-circle text-muted me-2"></i>
+                                        No data found in this batch
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                <div class="card-footer">
+                    <nav aria-label="Batch data pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ previous_page }}">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        <i class="fas fa-angle-left"></i>
+                                    </span>
+                                </li>
+                            {% endif %}
+                            
+                            <!-- Page numbers -->
+                            {% for page_num in total_pages|make_list %}
+                                {% if forloop.counter|add:"-1" == current_page|add:"-1" %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ forloop.counter }}</span>
+                                    </li>
+                                {% elif forloop.counter <= current_page|add:"2" and forloop.counter >= current_page|add:"-2" %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ forloop.counter }}">{{ forloop.counter }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ next_page }}">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ total_pages }}">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        <i class="fas fa-angle-right"></i>
+                                    </span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            Showing {{ data|length }} of {{ total_records }} articles
+                        </small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Statistics Card -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <i class="fas fa-newspaper fa-2x text-primary mb-2"></i>
+                            <h5>{{ total_records }}</h5>
+                            <small class="text-muted">Total Articles</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <i class="fas fa-database fa-2x text-success mb-2"></i>
+                            <h5>{{ batch_info.file_size_mb }} MB</h5>
+                            <small class="text-muted">File Size</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <i class="fas fa-columns fa-2x text-info mb-2"></i>
+                            <h5>{{ columns|length }}</h5>
+                            <small class="text-muted">Data Columns</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.table th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.badge {
+    font-size: 0.8em;
+}
+</style>
+{% endblock %}

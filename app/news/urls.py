@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from . import admin_views
 
 app_name = 'news'
 
@@ -55,4 +56,13 @@ urlpatterns = [
     # Debug endpoints
     path('debug-database/', views.debug_database, name='debug_database'),
     path('force-migrate/', views.force_migrate_now, name='force_migrate'),
+    
+    # Admin scraper endpoints
+    path('admin/scraper/', admin_views.admin_scraper_home, name='admin_scraper_home'),
+    path('admin/scraper/batches/', admin_views.list_batches, name='admin_list_batches'),
+    path('admin/scraper/start/', admin_views.start_scraping_batch, name='admin_start_scraping'),
+    path('admin/scraper/status/<str:batch_id>/', admin_views.batch_status, name='admin_batch_status'),
+    path('admin/scraper/view/<str:batch_id>/', admin_views.view_batch_content, name='admin_view_batch'),
+    path('admin/scraper/download/<str:batch_id>/', admin_views.download_batch, name='admin_download_batch'),
+    path('admin/scraper/delete/<str:batch_id>/', admin_views.delete_batch, name='admin_delete_batch'),
 ]

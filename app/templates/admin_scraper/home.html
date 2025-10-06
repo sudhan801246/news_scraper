@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin News Scraper - AI News Hub{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-robot me-2"></i>Admin News Scraper
+                    </h3>
+                    <small class="text-muted">AI-Powered News Aggregation Pipeline</small>
+                </div>
+                <div class="card-body">
+                    <!-- Scraper Form -->
+                    <div id="scraperForm">
+                        <div class="text-center mb-4">
+                            <div class="mb-3">
+                                <i class="fas fa-newspaper text-primary fa-3x mb-3"></i>
+                                <h5>News Aggregation System</h5>
+                                <p class="text-muted">
+                                    Scrape latest news from 12 premium sources across 6 categories:
+                                    Technology, Economy, Sports, Politics, Lifestyle, and Entertainment
+                                </p>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary btn-lg" id="startScrapingBtn">
+                                    <i class="fas fa-play me-2"></i>Start News Scraping
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Container -->
+                    <div id="progressContainer" style="display: none;">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>Scraping Progress</strong>
+                                <span id="statusBadge" class="badge bg-primary">Starting...</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <small class="text-muted">Sources</small>
+                                    <div><span id="sourcesCompleted">0</span>/<span id="totalSources">12</span></div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Articles</small>
+                                    <div id="articlesScraped">0</div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Status</small>
+                                    <div id="currentStage">Initializing...</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Batch ID:</strong> <span id="batchId">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Results Container -->
+                    <div id="resultsContainer" style="display: none;">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Scraping Completed!</strong>
+                            <div class="mt-2">
+                                <strong>Articles Scraped:</strong> <span id="finalArticleCount">0</span><br>
+                                <strong>Batch ID:</strong> <span id="finalBatchId">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="#" id="viewBatchBtn" class="btn btn-outline-primary">
+                                <i class="fas fa-eye me-2"></i>View Data
+                            </a>
+                            <a href="#" id="downloadBatchBtn" class="btn btn-outline-success">
+                                <i class="fas fa-download me-2"></i>Download CSV
+                            </a>
+                            <button type="button" class="btn btn-primary" onclick="resetForm()">
+                                <i class="fas fa-plus me-2"></i>Start New Scrape
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Batches -->
+            {% if recent_batches %}
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Scraping Batches
+                    </h5>
+                    <a href="{% url 'news:admin_list_batches' %}" class="btn btn-sm btn-outline-primary">
+                        View All Batches
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% for batch in recent_batches %}
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <div>
+                            <strong>{{ batch.batch_id }}</strong>
+                            <small class="text-muted d-block">
+                                {{ batch.created_time|timesince }} ago • {{ batch.article_count }} articles • {{ batch.file_size_mb }} MB
+                            </small>
+                        </div>
+                        <div>
+                            <a href="{% url 'news:admin_view_batch' batch.batch_id %}" class="btn btn-sm btn-outline-primary me-2">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'news:admin_download_batch' batch.batch_id %}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentBatchId = null;
+let statusInterval = null;
+
+document.getElementById('startScrapingBtn').addEventListener('click', async function() {
+    try {
+        // Hide form, show progress
+        document.getElementById('scraperForm').style.display = 'none';
+        document.getElementById('progressContainer').style.display = 'block';
+        document.getElementById('resultsContainer').style.display = 'none';
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        const response = await fetch('{% url "news:admin_start_scraping" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            currentBatchId = data.batch_id;
+            document.getElementById('batchId').textContent = currentBatchId;
+            startStatusUpdates();
+        } else {
+            alert('Error: ' + data.error);
+            resetForm();
+        }
+    } catch (error) {
+        alert('Error starting scraping: ' + error.message);
+        resetForm();
+    }
+});
+
+function startStatusUpdates() {
+    if (statusInterval) clearInterval(statusInterval);
+    
+    statusInterval = setInterval(async () => {
+        if (!currentBatchId) return;
+        
+        try {
+            const response = await fetch(`{% url 'news:admin_batch_status' '0' %}`.replace('0', currentBatchId));
+            const status = await response.json();
+            
+            updateStatusDisplay(status);
+            
+            if (status.status === 'completed' || status.status === 'failed') {
+                clearInterval(statusInterval);
+                showResults(status);
+            }
+        } catch (error) {
+            console.error('Error fetching status:', error);
+        }
+    }, 1000);
+}
+
+function updateStatusDisplay(status) {
+    const progress = status.sources_completed / status.total_sources * 100;
+    
+    document.getElementById('progressBar').style.width = progress + '%';
+    document.getElementById('sourcesCompleted').textContent = status.sources_completed || 0;
+    document.getElementById('totalSources').textContent = status.total_sources || 12;
+    document.getElementById('articlesScraped').textContent = status.articles_scraped || 0;
+    document.getElementById('currentStage').textContent = status.current_stage || 'Processing...';
+    
+    const badge = document.getElementById('statusBadge');
+    if (status.status === 'completed') {
+        badge.className = 'badge bg-success';
+        badge.textContent = 'Completed';
+    } else if (status.status === 'failed') {
+        badge.className = 'badge bg-danger';
+        badge.textContent = 'Failed';
+    } else {
+        badge.className = 'badge bg-primary';
+        badge.textContent = 'Running';
+    }
+}
+
+function showResults(status) {
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('resultsContainer').style.display = 'block';
+    
+    document.getElementById('finalArticleCount').textContent = status.articles_scraped || 0;
+    document.getElementById('finalBatchId').textContent = currentBatchId;
+    
+    // Set button URLs
+    document.getElementById('viewBatchBtn').href = `{% url 'news:admin_view_batch' '0' %}`.replace('0', currentBatchId);
+    document.getElementById('downloadBatchBtn').href = `{% url 'news:admin_download_batch' '0' %}`.replace('0', currentBatchId);
+}
+
+function resetForm() {
+    currentBatchId = null;
+    if (statusInterval) clearInterval(statusInterval);
+    
+    document.getElementById('scraperForm').style.display = 'block';
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('resultsContainer').style.display = 'none';
+}
+</script>
+{% endblock %}
