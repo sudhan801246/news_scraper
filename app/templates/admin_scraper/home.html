@@ -145,7 +145,13 @@ document.getElementById('startScrapingBtn').addEventListener('click', async func
         document.getElementById('resultsContainer').style.display = 'none';
         
         // Get CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfTokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfTokenElement) {
+            alert('CSRF token not found. Please refresh the page.');
+            resetForm();
+            return;
+        }
+        const csrfToken = csrfTokenElement.value;
         
         const response = await fetch('{% url "news:admin_start_scraping" %}', {
             method: 'POST',
@@ -159,10 +165,13 @@ document.getElementById('startScrapingBtn').addEventListener('click', async func
         
         if (response.ok) {
             currentBatchId = data.batch_id;
-            document.getElementById('batchId').textContent = currentBatchId;
+            const batchIdElement = document.getElementById('batchId');
+            if (batchIdElement) {
+                batchIdElement.textContent = currentBatchId;
+            }
             startStatusUpdates();
         } else {
-            alert('Error: ' + data.error);
+            alert('Error: ' + (data.error || 'Unknown error occurred'));
             resetForm();
         }
     } catch (error) {
@@ -196,35 +205,55 @@ function startStatusUpdates() {
 function updateStatusDisplay(status) {
     const progress = status.sources_completed / status.total_sources * 100;
     
-    document.getElementById('progressBar').style.width = progress + '%';
-    document.getElementById('sourcesCompleted').textContent = status.sources_completed || 0;
-    document.getElementById('totalSources').textContent = status.total_sources || 12;
-    document.getElementById('articlesScraped').textContent = status.articles_scraped || 0;
-    document.getElementById('currentStage').textContent = status.current_stage || 'Processing...';
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) progressBar.style.width = progress + '%';
+    
+    const sourcesCompleted = document.getElementById('sourcesCompleted');
+    if (sourcesCompleted) sourcesCompleted.textContent = status.sources_completed || 0;
+    
+    const totalSources = document.getElementById('totalSources');
+    if (totalSources) totalSources.textContent = status.total_sources || 12;
+    
+    const articlesScraped = document.getElementById('articlesScraped');
+    if (articlesScraped) articlesScraped.textContent = status.articles_scraped || 0;
+    
+    const currentStage = document.getElementById('currentStage');
+    if (currentStage) currentStage.textContent = status.current_stage || 'Processing...';
     
     const badge = document.getElementById('statusBadge');
-    if (status.status === 'completed') {
-        badge.className = 'badge bg-success';
-        badge.textContent = 'Completed';
-    } else if (status.status === 'failed') {
-        badge.className = 'badge bg-danger';
-        badge.textContent = 'Failed';
-    } else {
-        badge.className = 'badge bg-primary';
-        badge.textContent = 'Running';
+    if (badge) {
+        if (status.status === 'completed') {
+            badge.className = 'badge bg-success';
+            badge.textContent = 'Completed';
+        } else if (status.status === 'failed') {
+            badge.className = 'badge bg-danger';
+            badge.textContent = 'Failed';
+        } else {
+            badge.className = 'badge bg-primary';
+            badge.textContent = 'Running';
+        }
     }
 }
 
 function showResults(status) {
-    document.getElementById('progressContainer').style.display = 'none';
-    document.getElementById('resultsContainer').style.display = 'block';
+    const progressContainer = document.getElementById('progressContainer');
+    if (progressContainer) progressContainer.style.display = 'none';
     
-    document.getElementById('finalArticleCount').textContent = status.articles_scraped || 0;
-    document.getElementById('finalBatchId').textContent = currentBatchId;
+    const resultsContainer = document.getElementById('resultsContainer');
+    if (resultsContainer) resultsContainer.style.display = 'block';
+    
+    const finalArticleCount = document.getElementById('finalArticleCount');
+    if (finalArticleCount) finalArticleCount.textContent = status.articles_scraped || 0;
+    
+    const finalBatchId = document.getElementById('finalBatchId');
+    if (finalBatchId) finalBatchId.textContent = currentBatchId;
     
     // Set button URLs
-    document.getElementById('viewBatchBtn').href = `{% url 'news:admin_view_batch' '0' %}`.replace('0', currentBatchId);
-    document.getElementById('downloadBatchBtn').href = `{% url 'news:admin_download_batch' '0' %}`.replace('0', currentBatchId);
+    const viewBatchBtn = document.getElementById('viewBatchBtn');
+    if (viewBatchBtn) viewBatchBtn.href = `{% url 'news:admin_view_batch' '0' %}`.replace('0', currentBatchId);
+    
+    const downloadBatchBtn = document.getElementById('downloadBatchBtn');
+    if (downloadBatchBtn) downloadBatchBtn.href = `{% url 'news:admin_download_batch' '0' %}`.replace('0', currentBatchId);
 }
 
 function resetForm() {
