@@ -12,9 +12,14 @@ class DataLoader:
     """Utility class to load and manage CSV data files"""
     
     def __init__(self):
-        # Get project root directory
-        self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        self.data_dir = os.path.join(self.project_root, "data")
+        # Use Railway persistent storage if available
+        if os.path.exists("/app/data"):
+            # Railway persistent volume
+            self.data_dir = "/app/data"
+        else:
+            # Local development
+            self.project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            self.data_dir = os.path.join(self.project_root, "data")
         
         # Ensure data directory exists
         os.makedirs(self.data_dir, exist_ok=True)

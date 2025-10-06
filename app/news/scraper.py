@@ -493,11 +493,16 @@ def save_to_csv(data, filename="scraped_data.csv"):
     if data:
         print(f"\n{Colors.WARNING}💾 Saving {len(data)} articles to CSV file...{Colors.ENDC}")
         
-        # Create data directory path
+        # Create data directory path (Railway persistent storage)
         import os
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(os.path.dirname(script_dir))
-        data_dir = os.path.join(project_root, "data")
+        if os.path.exists("/app/data"):
+            # Railway persistent volume
+            data_dir = "/app/data"
+        else:
+            # Local development
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(os.path.dirname(script_dir))
+            data_dir = os.path.join(project_root, "data")
         
         # Ensure data directory exists
         os.makedirs(data_dir, exist_ok=True)
