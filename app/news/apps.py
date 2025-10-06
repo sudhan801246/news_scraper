@@ -8,13 +8,17 @@ class NewsConfig(AppConfig):
     name = 'news'
 
     def ready(self):
-        """Called when Django app is ready - load data from CSV files"""
+        """Called when Django app is ready - run migrations and load data"""
         import news.signals
         
         # Only run this in the main process, not in runserver reloader
         import os
-        if os.environ.get('RUN_MAIN', None) != 'true':
+        if os.environ.get('RUN_MAIN', None) != 'true' and 'gunicorn' not in os.environ.get('SERVER_SOFTWARE', ''):
             return
+            
+        # Force run migrations on Railway
+        if 'RAILWAY_ENVIRONMENT' in os.environ or 'railway.app' in os.environ.get('RAILWAY_PUBLIC_DOMAIN', ''):
+            self._run_migrations()
             
         try:
             from .data_loader import DataLoader
@@ -37,3 +41,13 @@ class NewsConfig(AppConfig):
                 
         except Exception as e:
             logger.error(f"Error auto-loading data: {e}")
+    
+    def _run_migrations(self):
+        """Force run migrations on Railway startup"""
+        try:
+            logger.info("🚀 Running forced migrations on Railway...")
+            from django.core.management import execute_from_command_line
+            execute_from_command_line(['manage.py', 'migrate', '--noinput'])
+            logger.info("✅ Forced migrations completed")
+        except Exception as e:
+            logger.error(f"❌ Forced migration failed: {e}")
