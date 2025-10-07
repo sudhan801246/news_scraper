@@ -7,27 +7,63 @@
     <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="rounded-3 p-4" style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%) !important; background-color: #2563eb; color: white !important; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="fw-bold mb-2" style="color: white !important; text-shadow: 0 2px 4px rgba(0,0,0,0.4);">
-                            <i class="fas fa-lightbulb me-2"></i>AI News Insights
-                        </h1>
-                        <p class="lead mb-0" style="color: white !important; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">{{ category_display }} news analysis powered by artificial intelligence</p>
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-filter me-2"></i>{{ category_display }}
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'news:insights' %}">All Categories</a></li>
-                            <li><a class="dropdown-item" href="{% url 'news:category_insights' 'technology' %}">Technology</a></li>
-                            <li><a class="dropdown-item" href="{% url 'news:category_insights' 'economy' %}">Economy</a></li>
-                            <li><a class="dropdown-item" href="{% url 'news:category_insights' 'sports' %}">Sports</a></li>
-                            <li><a class="dropdown-item" href="{% url 'news:category_insights' 'politics' %}">Politics</a></li>
-                            <li><a class="dropdown-item" href="{% url 'news:category_insights' 'lifestyle' %}">Lifestyle</a></li>
-                            <li><a class="dropdown-item" href="{% url 'news:category_insights' 'entertainment' %}">Entertainment</a></li>
-                        </ul>
+            <div class="rounded-3 p-4 text-center" style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%) !important; background-color: #2563eb; color: white !important; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+                <h1 class="fw-bold mb-2" style="color: white !important; text-shadow: 0 2px 4px rgba(0,0,0,0.4);">
+                    <i class="fas fa-lightbulb me-2"></i>AI News Insights
+                </h1>
+                <p class="lead mb-0" style="color: white !important; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">{{ category_display }} news analysis powered by artificial intelligence</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Category Filter Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body py-3">
+                    <div class="row g-2">
+                        <div class="col">
+                            <a href="{% url 'news:insights' %}" class="btn {% if category == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100 py-2">
+                                <i class="fas fa-globe d-block mb-1" style="font-size: 1rem;"></i>
+                                <small>All Categories</small>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{% url 'news:category_insights' 'technology' %}" class="btn {% if category == 'technology' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100 py-2">
+                                <i class="fas fa-microchip d-block mb-1" style="font-size: 1rem;"></i>
+                                <small>Technology</small>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{% url 'news:category_insights' 'economy' %}" class="btn {% if category == 'economy' %}btn-success{% else %}btn-outline-success{% endif %} w-100 py-2">
+                                <i class="fas fa-chart-line d-block mb-1" style="font-size: 1rem;"></i>
+                                <small>Economy</small>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{% url 'news:category_insights' 'sports' %}" class="btn {% if category == 'sports' %}btn-info{% else %}btn-outline-info{% endif %} w-100 py-2">
+                                <i class="fas fa-futbol d-block mb-1" style="font-size: 1rem;"></i>
+                                <small>Sports</small>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{% url 'news:category_insights' 'politics' %}" class="btn {% if category == 'politics' %}btn-danger{% else %}btn-outline-danger{% endif %} w-100 py-2">
+                                <i class="fas fa-landmark d-block mb-1" style="font-size: 1rem;"></i>
+                                <small>Politics</small>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{% url 'news:category_insights' 'lifestyle' %}" class="btn {% if category == 'lifestyle' %}btn-warning{% else %}btn-outline-warning{% endif %} w-100 py-2">
+                                <i class="fas fa-heart d-block mb-1" style="font-size: 1rem;"></i>
+                                <small>Lifestyle</small>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a href="{% url 'news:category_insights' 'entertainment' %}" class="btn {% if category == 'entertainment' %}btn-dark{% else %}btn-outline-dark{% endif %} w-100 py-2">
+                                <i class="fas fa-film d-block mb-1" style="font-size: 1rem;"></i>
+                                <small>Entertainment</small>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -143,6 +179,344 @@
 
 {% block extra_js %}
 <script>
+// Format AI insights content for better readability
+document.addEventListener('DOMContentLoaded', function() {
+    const insightsContent = document.querySelector('.insights-content');
+    if (insightsContent) {
+        // Get raw text content, ignoring any existing HTML
+        let content = insightsContent.textContent || insightsContent.innerText;
+        
+        // Clean up the content
+        content = content.replace(/\s+/g, ' ').trim();
+        
+        // Define sections we're looking for
+        const sections = [
+            { 
+                name: 'Trending Topics',
+                icon: 'fas fa-fire text-danger',
+                keywords: ['trending', 'topics', 'themes']
+            },
+            { 
+                name: 'News Patterns',
+                icon: 'fas fa-chart-line text-success',
+                keywords: ['patterns', 'insights', 'current news']
+            },
+            { 
+                name: 'Notable Developments',
+                icon: 'fas fa-exclamation-circle text-warning',
+                keywords: ['developments', 'notable', 'attention']
+            },
+            { 
+                name: 'Overall Analysis',
+                icon: 'fas fa-globe text-info',
+                keywords: ['analysis', 'overall', 'landscape']
+            }
+        ];
+        
+        let html = '';
+        
+        // Extract sections more reliably
+        const extractedSections = {};
+        let processedSections = new Set();
+        
+        // Split by SECTION: or section names
+        const splitRegex = /(?=SECTION:\s*(?:Trending Topics|News Patterns|Notable Developments|Overall Analysis))|(?=(?:Trending Topics|News Patterns|Notable Developments|Overall Analysis))/i;
+        const parts = content.split(splitRegex).filter(p => p.trim());
+        
+        // Process each part
+        for (let part of parts) {
+            part = part.trim();
+            if (!part) continue;
+            
+            // Find which section this belongs to
+            let matchedSection = null;
+            for (let section of sections) {
+                if (section.keywords.some(keyword => 
+                    part.toLowerCase().includes(keyword.toLowerCase()))) {
+                    
+                    // Avoid duplicate sections
+                    if (processedSections.has(section.name)) {
+                        continue;
+                    }
+                    
+                    matchedSection = section;
+                    processedSections.add(section.name);
+                    break;
+                }
+            }
+            
+            if (matchedSection) {
+                // Extract content, remove section header
+                let sectionContent = part.replace(/^(SECTION:\s*)?.*?(?:Topics|Patterns|Developments|Analysis)[:\s]*/i, '').trim();
+                
+                // Clean up content
+                sectionContent = sectionContent.replace(/\*\*/g, '').replace(/^[-•]\s*/gm, '').trim();
+                
+                // Remove any trailing "Overall Analysis" text that might be mixed in
+                sectionContent = sectionContent.replace(/Overall Analysis.*$/i, '').trim();
+                
+                extractedSections[matchedSection.name] = {
+                    icon: matchedSection.icon,
+                    content: sectionContent
+                };
+            }
+        }
+        
+        // Generate HTML for extracted sections
+        for (let section of sections) {
+            if (extractedSections[section.name]) {
+                const data = extractedSections[section.name];
+                let sectionContent = data.content;
+                
+                if (!sectionContent) continue;
+                
+                html += `<div class="insights-section mb-4">
+                    <h4 class="mb-3"><i class="${data.icon} me-2"></i>${section.name}</h4>
+                    <div class="section-content">`;
+                
+                // Split into numbered points if they exist
+                let points = sectionContent.split(/\d+\.\s*/).filter(p => p.trim());
+                
+                if (points.length > 1) {
+                    // Multiple numbered points - show first 4, hide rest
+                    const initialItems = (section.name === 'Overall Analysis') ? points.length : 4;
+                    const sectionId = section.name.toLowerCase().replace(/\s+/g, '-');
+                    
+                    // Show initial 4 items
+                    points.slice(0, initialItems).forEach(point => {
+                        if (point.trim()) {
+                            html += `<div class="insight-item mb-3">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <span>${point.trim()}</span>
+                            </div>`;
+                        }
+                    });
+                    
+                    // Add progressive loading if there are more than 4 items
+                    if (points.length > initialItems) {
+                        // Store all remaining items with progressive show logic
+                        const remainingItems = points.slice(initialItems);
+                        
+                        // Create containers for progressive loading (4 items at a time)
+                        let batchIndex = 0;
+                        for (let i = 0; i < remainingItems.length; i += 4) {
+                            const batch = remainingItems.slice(i, i + 4);
+                            html += `<div class="hidden-batch-${sectionId}-${batchIndex}" style="display: none;">`;
+                            batch.forEach(point => {
+                                if (point.trim()) {
+                                    html += `<div class="insight-item mb-3 fade-in">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <span>${point.trim()}</span>
+                                    </div>`;
+                                }
+                            });
+                            html += `</div>`;
+                            batchIndex++;
+                        }
+                        
+                        // Add progressive show more button
+                        const totalRemaining = remainingItems.length;
+                        const nextBatchSize = Math.min(4, totalRemaining);
+                        
+                        html += `<div class="show-more-container text-center mb-3">
+                            <button class="btn btn-outline-primary btn-sm show-more-btn" 
+                                    onclick="showNextBatch('${sectionId}')"
+                                    data-section="${sectionId}"
+                                    data-total-batches="${batchIndex}"
+                                    data-current-batch="0"
+                                    data-total-remaining="${totalRemaining}">
+                                <i class="fas fa-chevron-down me-2"></i>
+                                <span class="show-text">Show ${nextBatchSize} more item${nextBatchSize > 1 ? 's' : ''}</span>
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm ms-2 show-less-btn" 
+                                    onclick="showLessItems('${sectionId}')"
+                                    data-section="${sectionId}"
+                                    style="display: none;">
+                                <i class="fas fa-chevron-up me-2"></i>
+                                Show less
+                            </button>
+                        </div>`;
+                    }
+                } else {
+                    // Single content block - split by sentences for non-Analysis sections
+                    if (section.name !== 'Overall Analysis') {
+                        // Try to split by sentences or periods for better formatting
+                        const sentences = sectionContent.split(/[.!?]+/).filter(s => s.trim());
+                        const sectionId = section.name.toLowerCase().replace(/\s+/g, '-');
+                        
+                        if (sentences.length > 4) {
+                            // Show first 4 sentences
+                            sentences.slice(0, 4).forEach(sentence => {
+                                if (sentence.trim()) {
+                                    html += `<div class="insight-item mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <span>${sentence.trim()}.</span>
+                                    </div>`;
+                                }
+                            });
+                            
+                            // Add hidden sentences
+                            html += `<div class="hidden-items-${sectionId}" style="display: none;">`;
+                            sentences.slice(4).forEach(sentence => {
+                                if (sentence.trim()) {
+                                    html += `<div class="insight-item mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <span>${sentence.trim()}.</span>
+                                    </div>`;
+                                }
+                            });
+                            html += `</div>`;
+                            
+                            // Add show more button
+                            const remainingCount = sentences.length - 4;
+                            html += `<div class="show-more-container text-center mb-3">
+                                <button class="btn btn-outline-primary btn-sm show-more-btn" 
+                                        onclick="toggleMoreItems('${sectionId}')"
+                                        data-section="${sectionId}"
+                                        data-remaining="${remainingCount}">
+                                    <i class="fas fa-chevron-down me-2"></i>
+                                    <span class="show-text">Show ${remainingCount} more item${remainingCount > 1 ? 's' : ''}</span>
+                                    <span class="hide-text" style="display: none;">
+                                        <i class="fas fa-chevron-up me-2"></i>Show less
+                                    </span>
+                                </button>
+                            </div>`;
+                        } else if (sentences.length > 1) {
+                            sentences.forEach(sentence => {
+                                if (sentence.trim()) {
+                                    html += `<div class="insight-item mb-3">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <span>${sentence.trim()}.</span>
+                                    </div>`;
+                                }
+                            });
+                        } else {
+                            html += `<div class="insight-item mb-3">
+                                <span>${sectionContent}</span>
+                            </div>`;
+                        }
+                    } else {
+                        // Overall Analysis - keep as single block
+                        html += `<div class="insight-item mb-3">
+                            <span>${sectionContent}</span>
+                        </div>`;
+                    }
+                }
+                
+                html += '</div></div>';
+            }
+        }
+        
+        // Fallback if no sections were found
+        if (Object.keys(extractedSections).length === 0) {
+            html = `<div class="insights-section mb-4">
+                <h4 class="mb-3"><i class="fas fa-lightbulb text-primary me-2"></i>AI Analysis</h4>
+                <div class="section-content">
+                    <div class="insight-item mb-3">
+                        <span>${content}</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+        
+        // Replace content
+        insightsContent.innerHTML = html;
+    }
+});
+
+// Progressive show more functionality - show 4 items at a time
+function showNextBatch(sectionId) {
+    const button = document.querySelector(`button[data-section="${sectionId}"]`);
+    const showLessBtn = document.querySelector(`.show-less-btn[data-section="${sectionId}"]`);
+    
+    let currentBatch = parseInt(button.getAttribute('data-current-batch'));
+    const totalBatches = parseInt(button.getAttribute('data-total-batches'));
+    const totalRemaining = parseInt(button.getAttribute('data-total-remaining'));
+    
+    // Show current batch
+    const batchContainer = document.querySelector(`.hidden-batch-${sectionId}-${currentBatch}`);
+    if (batchContainer) {
+        batchContainer.style.display = 'block';
+        
+        // Add fade-in animation
+        setTimeout(() => {
+            const items = batchContainer.querySelectorAll('.insight-item');
+            items.forEach((item, index) => {
+                setTimeout(() => {
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateY(10px)';
+                    item.style.transition = 'all 0.3s ease';
+                    setTimeout(() => {
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateY(0)';
+                    }, 50);
+                }, index * 100);
+            });
+        }, 50);
+        
+        // Smooth scroll to the new content
+        setTimeout(() => {
+            batchContainer.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+            });
+        }, 200);
+    }
+    
+    // Update batch counter
+    currentBatch++;
+    button.setAttribute('data-current-batch', currentBatch);
+    
+    // Update button text and visibility
+    if (currentBatch >= totalBatches) {
+        // All items shown, hide show more button
+        button.style.display = 'none';
+    } else {
+        // Update button text for next batch
+        const remainingItems = totalRemaining - (currentBatch * 4);
+        const nextBatchSize = Math.min(4, remainingItems);
+        const showText = button.querySelector('.show-text');
+        showText.textContent = `Show ${nextBatchSize} more item${nextBatchSize > 1 ? 's' : ''}`;
+    }
+    
+    // Show the "Show less" button
+    showLessBtn.style.display = 'inline-block';
+}
+
+// Show less functionality - collapse all expanded items
+function showLessItems(sectionId) {
+    const button = document.querySelector(`button[data-section="${sectionId}"]`);
+    const showLessBtn = document.querySelector(`.show-less-btn[data-section="${sectionId}"]`);
+    const totalBatches = parseInt(button.getAttribute('data-total-batches'));
+    const totalRemaining = parseInt(button.getAttribute('data-total-remaining'));
+    
+    // Hide all expanded batches
+    for (let i = 0; i < totalBatches; i++) {
+        const batchContainer = document.querySelector(`.hidden-batch-${sectionId}-${i}`);
+        if (batchContainer) {
+            batchContainer.style.display = 'none';
+        }
+    }
+    
+    // Reset button state
+    button.setAttribute('data-current-batch', '0');
+    button.style.display = 'inline-block';
+    showLessBtn.style.display = 'none';
+    
+    // Update button text to original state
+    const nextBatchSize = Math.min(4, totalRemaining);
+    const showText = button.querySelector('.show-text');
+    showText.textContent = `Show ${nextBatchSize} more item${nextBatchSize > 1 ? 's' : ''}`;
+    
+    // Scroll back to the section
+    setTimeout(() => {
+        button.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    }, 100);
+}
+
 // Auto-refresh insights every 30 minutes
 setTimeout(function() {
     if (confirm('Would you like to refresh the insights with the latest data?')) {

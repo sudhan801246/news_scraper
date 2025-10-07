@@ -276,6 +276,7 @@ body {
 .insights-content {
     color: #1f2937 !important;
     line-height: 1.7;
+    font-size: 1.05rem;
 }
 
 .insights-content h1,
@@ -290,18 +291,213 @@ body {
     margin-bottom: 0.75rem;
 }
 
+/* Format AI insights with better typography */
+.insights-content p strong {
+    color: #1f2937 !important;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: block;
+    margin: 1.5rem 0 0.5rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
 .insights-content p {
     color: #374151 !important;
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
 }
 
 .insights-content ul,
 .insights-content ol {
     color: #374151 !important;
+    margin-left: 1.5rem;
 }
 
 .insights-content li {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-left: 0.5rem;
+}
+
+/* Style bullet points in insights */
+.insights-content li strong {
+    color: #2563eb !important;
+    font-weight: 600;
+}
+
+/* Better formatting for AI insights sections */
+.insights-section {
+    background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #2563eb;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.insights-section:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.insights-section h4 {
+    color: #1f2937 !important;
+    margin-bottom: 1rem !important;
+    font-size: 1.3rem;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+.section-content {
+    margin-top: 1rem;
+}
+
+.insight-item {
+    background: white;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+}
+
+.insight-item:hover {
+    background: #fafbfc;
+    border-color: #e2e8f0;
+}
+
+.insight-item strong {
+    color: #1f2937 !important;
+    font-weight: 600;
+}
+
+.insight-item span {
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+/* Show More Button Styling */
+.show-more-container {
+    margin: 1rem 0;
+}
+
+.show-more-btn {
+    border-radius: 2rem;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    color: #2563eb;
+}
+
+.show-more-btn:hover {
+    background: linear-gradient(145deg, #e2e8f0 0%, #cbd5e1 100%);
+    border-color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.15);
+    color: #1d4ed8;
+}
+
+.show-more-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+}
+
+.show-more-btn i {
+    transition: transform 0.3s ease;
+}
+
+.show-more-btn:hover i {
+    transform: translateY(-1px);
+}
+
+.show-less-btn {
+    border-radius: 2rem;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* Fade-in animation for progressive loading */
+.fade-in {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease;
+}
+
+.insight-item.fade-in {
+    animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Category filter buttons */
+.category-filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.category-filter-buttons .btn {
+    border-radius: 2rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.category-filter-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Better colors for category buttons on blue background */
+.ai-header-gradient .category-filter-buttons .btn-primary {
+    background-color: white !important;
+    color: #2563eb !important;
+    border: 2px solid white !important;
+    font-weight: 600;
+}
+
+.ai-header-gradient .category-filter-buttons .btn-outline-primary {
+    background-color: rgba(255,255,255,0.1) !important;
+    color: white !important;
+    border: 2px solid rgba(255,255,255,0.3) !important;
+    backdrop-filter: blur(10px);
+}
+
+.ai-header-gradient .category-filter-buttons .btn-outline-primary:hover {
+    background-color: rgba(255,255,255,0.2) !important;
+    border-color: rgba(255,255,255,0.5) !important;
+    color: white !important;
+}
+
+/* For personalized news page with green background */
+.personalized-header-gradient .category-filter-buttons .btn-primary {
+    background-color: white !important;
+    color: #10b981 !important;
+    border: 2px solid white !important;
+    font-weight: 600;
+}
+
+.personalized-header-gradient .category-filter-buttons .btn-outline-primary {
+    background-color: rgba(255,255,255,0.1) !important;
+    color: white !important;
+    border: 2px solid rgba(255,255,255,0.3) !important;
 }
 
 /* Improved gradient headers with better text visibility */

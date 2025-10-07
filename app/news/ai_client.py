@@ -83,17 +83,30 @@ class GroqAIClient:
         ])
         
         prompt = f"""
-        Analyze these current news headlines and provide insights:
+        Analyze these news headlines and provide insights in this EXACT format:
 
         {headlines_text}
 
-        Please provide:
-        1. Top 3 trending topics or themes
-        2. Key insights about current news patterns
-        3. Notable developments worth attention
-        4. Brief analysis of the overall news landscape
+        IMPORTANT: Follow this exact structure:
 
-        Format your response clearly with headings and bullet points.
+        SECTION: Trending Topics
+        1. [Topic Name]: [2-3 sentence explanation]
+        2. [Topic Name]: [2-3 sentence explanation]  
+        3. [Topic Name]: [2-3 sentence explanation]
+
+        SECTION: News Patterns
+        1. [Pattern Name]: [Explanation of what this indicates]
+        2. [Pattern Name]: [Explanation of what this indicates]
+        3. [Pattern Name]: [Explanation of what this indicates]
+
+        SECTION: Notable Developments  
+        1. [Development]: [Why it's significant]
+        2. [Development]: [Why it's significant]
+
+        SECTION: Overall Analysis
+        [Write 2-3 paragraphs analyzing the overall news landscape]
+
+        Do NOT use markdown, asterisks, or special formatting. Use the exact "SECTION:" and numbered format shown above.
         """
         
         try:
