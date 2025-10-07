@@ -335,39 +335,24 @@ def personalized_news(request):
 # Admin/Management Views
 @login_required
 def refresh_news(request):
-    """Manually refresh news articles (admin function)"""
+    """Refresh articles from existing CSV files (no new scraping)"""
     if not request.user.is_staff:
         messages.error(request, 'Access denied.')
         return redirect('news:dashboard')
     
     try:
-        # Clear existing articles (optional)
-        if request.GET.get('clear') == 'true':
-            Article.objects.all().delete()
-            messages.info(request, 'Existing articles cleared.')
+        # Always clear existing articles for fresh data
+        Article.objects.all().delete()
+        messages.info(request, 'Existing articles cleared.')
         
-        # Scrape new articles
-        scraped_data = scrape_all_news()
+        # Load articles from existing CSV files (no new scraping)
+        from .data_loader import load_news_data
+        articles_loaded = load_news_data()
         
-        if scraped_data:
-            # Save to database
-            created_count = 0
-            for article_data in scraped_data:
-                article, created = Article.objects.get_or_create(
-                    title=article_data['title'],
-                    url=article_data['link'],
-                    defaults={
-                        'image': article_data.get('image', ''),
-                        'source': article_data.get('source', ''),
-                        'category': article_data.get('category', 'technology'),
-                    }
-                )
-                if created:
-                    created_count += 1
-            
-            messages.success(request, f'Successfully added {created_count} new articles!')
+        if articles_loaded > 0:
+            messages.success(request, f'Successfully loaded {articles_loaded} articles from CSV files!')
         else:
-            messages.warning(request, 'No new articles found.')
+            messages.warning(request, 'No articles found in CSV files. Run the scraper first to generate data.')
     
     except Exception as e:
         logger.error(f"Error refreshing news: {e}")
