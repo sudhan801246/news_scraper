@@ -16,7 +16,7 @@ import logging
 from .models import Article, Comment, Profile
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm, CommentForm
 from .scraper import scrape_all_news
-from .gemini_client import gemini_client
+from .ai_client import groq_client
 
 logger = logging.getLogger(__name__)
 
@@ -242,8 +242,8 @@ def news_insights(request, category='all'):
             for article in articles
         ]
         
-        # Generate insights using Gemini AI
-        insights_result = gemini_client.generate_insights(headlines)
+        # Generate insights using Groq AI
+        insights_result = groq_client.generate_insights(headlines)
         
         context = {
             'category': category,
@@ -300,7 +300,7 @@ def personalized_news(request):
         ]
         
         # Get AI recommendations
-        recommended_headlines = gemini_client.personalize_recommendations(interests, headlines)
+        recommended_headlines = groq_client.personalize_recommendations(interests, headlines)
         
         # Get the actual article objects
         recommended_articles = []
@@ -391,7 +391,7 @@ def api_article_summary(request, pk):
         article = get_object_or_404(Article, pk=pk)
         
         # Generate summary using AI
-        summary = gemini_client.summarize_article(
+        summary = groq_client.summarize_article(
             article.title,
             f"Article from {article.source} about {article.category}"
         )
@@ -422,7 +422,7 @@ def api_sentiment_analysis(request):
             for article in recent_articles
         ]
         
-        sentiment_result = gemini_client.analyze_sentiment(headlines)
+        sentiment_result = groq_client.analyze_sentiment(headlines)
         return JsonResponse(sentiment_result)
     
     except Exception as e:

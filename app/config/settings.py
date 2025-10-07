@@ -130,7 +130,7 @@ else:
     DEFAULT_FROM_EMAIL = 'noreply@newshub.com'
 
 # AI Configuration
-GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+GROQ_API_KEY = config('GROQ_API_KEY', default='')
 
 # Security settings for production
 if not DEBUG:

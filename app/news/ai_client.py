@@ -1,4 +1,4 @@
-import google.generativeai as genai
+from groq import Groq
 from django.conf import settings
 import logging
 from typing import List, Dict, Any
@@ -6,36 +6,54 @@ from typing import List, Dict, Any
 logger = logging.getLogger(__name__)
 
 
-class GeminiClient:
-    """Enhanced Gemini API client for news processing"""
+class GroqAIClient:
+    """Groq AI client for news processing - Fast, free, and efficient"""
     
     def __init__(self):
-        """Initialize the Gemini client with API key from settings"""
-        if not settings.GEMINI_API_KEY:
-            logger.warning("GEMINI_API_KEY not found in settings")
+        """Initialize the Groq client with API key from settings"""
+        if not settings.GROQ_API_KEY:
+            logger.warning("GROQ_API_KEY not found in settings")
             self.client = None
             return
             
         try:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
-            self.client = True
-            logger.info("Gemini client initialized successfully")
+            self.client = Groq(
+                api_key=settings.GROQ_API_KEY,
+            )
+            self.model_name = "llama-3.1-8b-instant"  # Fast and free model
+            logger.info("Groq AI client initialized successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize Gemini client: {e}")
+            logger.error(f"Failed to initialize Groq client: {e}")
             self.client = None
 
     def _generate_content(self, prompt: str) -> str:
-        """Generate content using Gemini API"""
+        """Generate content using Groq API"""
         if not self.client:
             return "AI service unavailable. Please check configuration."
         
         try:
-            response = self.model.generate_content(prompt)
-            return response.text
+            chat_completion = self.client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+                model=self.model_name,
+                temperature=0.7,
+                max_tokens=1024,
+                top_p=1,
+                stream=False,
+            )
+            return chat_completion.choices[0].message.content
         except Exception as e:
             logger.error(f"Error generating content: {e}")
-            return "Sorry, I couldn't generate a response at this time."
+            if "429" in str(e) or "rate limit" in str(e).lower():
+                return "AI service rate limit reached. Please wait a few minutes and try again."
+            elif "401" in str(e) or "api key" in str(e).lower():
+                return "AI service authentication failed. Please contact admin to check the API key configuration."
+            else:
+                return "Sorry, I couldn't generate a response at this time. Please try again later."
 
     def summarize_article(self, title: str, content: str) -> str:
         """Generate a concise summary of a news article"""
@@ -189,4 +207,4 @@ class GeminiClient:
 
 
 # Global instance for easy access
-gemini_client = GeminiClient()
+groq_client = GroqAIClient()
