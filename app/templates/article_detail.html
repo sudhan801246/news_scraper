@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load datetime_extras %}
 
 {% block title %}{{ article.title }} - AI News Hub{% endblock %}
 
@@ -21,7 +22,7 @@
                         </span>
                         {% endif %}
                         <span class="text-muted ms-2">
-                            <i class="fas fa-clock me-1"></i>{{ article.created_at|timesince }} ago
+                            <i class="fas fa-clock me-1"></i>{{ article|publication_time }}
                         </span>
                     </div>
                     
@@ -147,7 +148,7 @@
                         <small class="text-muted">
                             <i class="fas fa-building me-1"></i>{{ related.source }}
                             <span class="mx-2">•</span>
-                            {{ related.created_at|timesince }} ago
+                            {{ related|publication_time }}
                         </small>
                     </div>
                     {% endfor %}

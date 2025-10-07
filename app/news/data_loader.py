@@ -5,6 +5,7 @@ from django.conf import settings
 from .models import Article
 import logging
 from datetime import datetime
+from dateutil import parser as date_parser
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,19 @@ class DataLoader:
         
         # Ensure data directory exists
         os.makedirs(self.data_dir, exist_ok=True)
+    
+    def parse_publication_datetime(self, datetime_str):
+        """Parse datetime string from scraped data to Django datetime object"""
+        if not datetime_str or pd.isna(datetime_str) or str(datetime_str).strip() == '':
+            return None
+        
+        try:
+            # The format from scraper is "6 Oct 2025, 16:42"
+            parsed_dt = date_parser.parse(str(datetime_str).strip(), fuzzy=True)
+            return parsed_dt
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Could not parse datetime '{datetime_str}': {e}")
+            return None
     
     def get_all_csv_files(self):
         """Get all CSV files from the data directory"""
@@ -78,6 +92,9 @@ class DataLoader:
         
         for _, row in dataframe.iterrows():
             try:
+                # Parse publication datetime
+                published_at = self.parse_publication_datetime(row.get('datetime', ''))
+                
                 # Check if article already exists
                 article, created = Article.objects.get_or_create(
                     url=row['link'],
@@ -86,6 +103,7 @@ class DataLoader:
                         'source': row['source'],
                         'category': row['category'],
                         'image': row.get('image', ''),
+                        'published_at': published_at,
                     }
                 )
                 
@@ -97,6 +115,9 @@ class DataLoader:
                     article.source = row['source']
                     article.category = row['category']
                     article.image = row.get('image', '')
+                    # Update published_at only if we have a new datetime and the existing one is None
+                    if published_at and not article.published_at:
+                        article.published_at = published_at
                     article.save()
                     articles_updated += 1
                     

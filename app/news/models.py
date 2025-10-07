@@ -38,13 +38,15 @@ class Article(models.Model):
     url = models.TextField()
     source = models.CharField(max_length=200, null=True, blank=True)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    published_at = models.DateTimeField(null=True, blank=True, help_text="Article publication date from source")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-published_at', '-created_at']
         indexes = [
             models.Index(fields=['category']),
             models.Index(fields=['source']),
+            models.Index(fields=['-published_at']),
             models.Index(fields=['-created_at']),
         ]
 
