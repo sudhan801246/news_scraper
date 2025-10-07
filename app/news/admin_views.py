@@ -358,9 +358,28 @@ def view_batch_content(request, batch_id):
         paginated_data = df[start_idx:end_idx]
         total_pages = (len(df) + per_page - 1) // per_page
         
+        # Convert to template-friendly format with column names
+        rows_data = []
+        for _, row in paginated_data.iterrows():
+            row_dict = {}
+            for col in df.columns:
+                # Clean column names for template access
+                clean_col = col.replace(' ', '_').replace('-', '_').lower()
+                row_dict[clean_col] = row[col] if pd.notna(row[col]) else ''
+                row_dict[f'col_{clean_col}'] = col  # Store original column name
+            rows_data.append(row_dict)
+        
+        # Also create a simple list format for easier iteration
+        simple_rows = []
+        for _, row in paginated_data.iterrows():
+            row_values = []
+            for col in df.columns:
+                row_values.append(row[col] if pd.notna(row[col]) else '')
+            simple_rows.append(row_values)
+        
         context = {
             'batch_info': batch_info,
-            'data': paginated_data.to_dict('records'),
+            'data': simple_rows,
             'columns': df.columns.tolist(),
             'current_page': page,
             'total_pages': total_pages,
