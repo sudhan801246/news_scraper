@@ -272,6 +272,47 @@ body {
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
+/* AI Insights and Personalized News Enhancements */
+.insights-content {
+    color: #1f2937 !important;
+    line-height: 1.7;
+}
+
+.insights-content h1,
+.insights-content h2,
+.insights-content h3,
+.insights-content h4,
+.insights-content h5,
+.insights-content h6 {
+    color: #1f2937 !important;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.insights-content p {
+    color: #374151 !important;
+    margin-bottom: 1rem;
+}
+
+.insights-content ul,
+.insights-content ol {
+    color: #374151 !important;
+}
+
+.insights-content li {
+    margin-bottom: 0.5rem;
+}
+
+/* Improved gradient headers with better text visibility */
+.bg-gradient h1,
+.bg-gradient h2,
+.bg-gradient h3,
+.bg-gradient p,
+.bg-gradient .lead {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
+}
+
 /* Focus states for accessibility */
 .btn:focus,
 .form-control:focus,
