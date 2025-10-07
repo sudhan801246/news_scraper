@@ -7,6 +7,8 @@ import time
 from datetime import datetime
 import re
 from dateutil import parser
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 # Configure colorful logging
 logging.basicConfig(
@@ -488,8 +490,21 @@ def scrape_entertainment_variety():
     return data
 
 
-def scrape_all_news():
-    """Main function to scrape all news from all sources with progress tracking"""
+def scrape_single_source(source_info):
+    """Scrape a single source - designed for parallel execution"""
+    source_name, category, scraper_func = source_info
+    try:
+        logger.info(f"Starting scrape: {source_name} ({category})")
+        data = scraper_func()
+        logger.info(f"Success: {source_name} - {len(data)} articles")
+        return source_name, data, None
+    except Exception as e:
+        logger.error(f"Failed: {source_name}")
+        logger.error(f"Error in {scraper_func.__name__}: {e}")
+        return source_name, [], str(e)
+
+def scrape_all_news_parallel():
+    """Parallel scraping function for faster execution"""
     print_banner()
     
     scraped_data = []
@@ -509,32 +524,43 @@ def scrape_all_news():
         ("Variety", "Entertainment", scrape_entertainment_variety),
     ]
     
-    print(f"{Colors.HEADER}🚀 Starting news aggregation from {len(scrapers)} sources...{Colors.ENDC}\n")
+    print(f"{Colors.HEADER}🚀 Starting PARALLEL news aggregation from {len(scrapers)} sources...{Colors.ENDC}")
+    print(f"{Colors.OKBLUE}⚡ Using 6 parallel workers for faster scraping{Colors.ENDC}\n")
     
-    # Progress bar for overall scraping
-    with tqdm(total=len(scrapers), desc="📰 Scraping Progress", 
-              bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} sources [{elapsed}<{remaining}]",
-              colour="green") as pbar:
+    # Use ThreadPoolExecutor for parallel execution
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        # Submit all scraping tasks
+        future_to_source = {
+            executor.submit(scrape_single_source, scraper_info): scraper_info[0] 
+            for scraper_info in scrapers
+        }
         
-        for source_name, category, scraper_func in scrapers:
-            try:
-                # Update progress bar description
-                pbar.set_description(f"🔍 Scraping {source_name}")
+        # Progress bar for completed tasks
+        with tqdm(total=len(scrapers), desc="📰 Parallel Scraping", 
+                  bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} sources [{elapsed}<{remaining}]",
+                  colour="green") as pbar:
+            
+            # Process completed tasks as they finish
+            for future in as_completed(future_to_source):
+                source_name, data, error = future.result()
                 
-                # Add small delay for visual effect
-                time.sleep(0.5)
+                if error:
+                    log_scraper_result(source_name, 0, False)
+                    pbar.set_description(f"❌ Failed: {source_name}")
+                else:
+                    scraped_data.extend(data)
+                    log_scraper_result(source_name, len(data), True)
+                    pbar.set_description(f"✅ Completed: {source_name}")
                 
-                # Run the scraper
-                data = scraper_func()
-                scraped_data.extend(data)
-                
-                # Update progress bar
                 pbar.update(1)
-                
-            except Exception as e:
-                log_scraper_result(source_name, 0, False)
-                logger.error(f"Error in {scraper_func.__name__}: {e}")
-                pbar.update(1)
+                time.sleep(0.1)  # Brief pause for visual effect
+    
+    return scraped_data
+
+def scrape_all_news():
+    """Main function to scrape all news from all sources with progress tracking"""
+    # Use parallel scraping for better performance
+    scraped_data = scrape_all_news_parallel()
     
     # Calculate statistics
     categories_stats = {}
@@ -551,6 +577,11 @@ def scrape_all_news():
     
     # Display final summary
     log_final_summary(len(scraped_data), categories_stats, sources_stats)
+    
+    # Save to CSV file
+    if scraped_data:
+        csv_file = save_to_csv(scraped_data)
+        print(f"{Colors.OKGREEN}✅ Data automatically saved to: {csv_file}{Colors.ENDC}")
     
     return scraped_data
 
