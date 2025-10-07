@@ -313,6 +313,30 @@ body {
     text-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
 }
 
+/* Robust gradient headers for AI pages */
+.ai-header-gradient {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #3b82f6 100%) !important;
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.ai-header-gradient h1,
+.ai-header-gradient h2,
+.ai-header-gradient h3,
+.ai-header-gradient p,
+.ai-header-gradient .lead {
+    color: white !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
+}
+
+.personalized-header-gradient {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    background-color: #10b981 !important;
+    color: white !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
 /* Focus states for accessibility */
 .btn:focus,
 .form-control:focus,
